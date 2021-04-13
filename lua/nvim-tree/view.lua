@@ -88,6 +88,8 @@ function M.setup()
       a.nvim_buf_set_keymap(M.View.bufnr, 'n', key, cb, { noremap = true, silent = true })
     end
   end
+
+  vim.cmd "au BufEnter * ++nested lua require'nvim-tree'.open_on_directory()"
 end
 
 function M.win_open()
@@ -149,6 +151,11 @@ function M.close()
     return vim.cmd ':q!'
   end
   a.nvim_win_hide(M.View.winnr)
+end
+
+function M.reset()
+  M.close()
+  M.open()
 end
 
 return M
