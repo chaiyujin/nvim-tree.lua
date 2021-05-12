@@ -247,6 +247,11 @@ function M.open_file(mode, filename)
 
   view.resize()
 
+  -- set target win if we split once
+  if not found and (mode == 'edit' or mode == 'preview') and not target_bufnr then
+    M.set_target_win()
+  end
+
   if mode == 'preview' then
     if not found then M.set_target_win() end
     view.focus()
