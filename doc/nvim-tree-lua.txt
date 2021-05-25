@@ -97,8 +97,14 @@ is installed and in your |runtimepath|
 
 |g:nvim_tree_highlight_opened_files|			        *g:nvim_tree_highlight_opened_files*
 
-Can be `0` or `1`. When `1`, will highlight icons for opened files and directories
+Highlight icons and/or names for opened files and directories
 Default is 0
+
+Must be:
+    0: No highlight
+    1: Enable highligting for folders and file icons only.
+    2: Enable highligting for folders and file names only.
+    3: Enable highligting for folders and both file icons and names.
 
 |g:nvim_tree_icons|                                *g:nvim_tree_icons*
 
@@ -127,6 +133,12 @@ You can set icons for:
       \   'empty_open':   "",
       \   'symlink':      "",
       \   'symlink_open': "",
+      \  },
+      \  'lsp': {
+      \    'hint': "",
+      \    'info': "",
+      \    'warning': "",
+      \    'error': "",
       \  }
       \ }
 
@@ -243,7 +255,17 @@ default table is
       ["README.md"] = true,
       ["readme.md"] = true,
    }
-<
+
+
+|g:nvim_tree_disable_window_picker|          *g:nvim_tree_disable_window_picker*
+
+Can be 0 or 1. When 1, will disable the window picker. Files will open in the
+window from which you last opened NvimTree.
+
+|g:nvim_tree_window_picker_chars|              *g:nvim_tree_window_picker_chars*
+
+A string of chars used as identifiers by the window picker.
+`"ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"` by default.
 
 ==============================================================================
 INFORMATIONS				        *nvim-tree-info*

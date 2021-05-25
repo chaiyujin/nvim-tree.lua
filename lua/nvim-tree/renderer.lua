@@ -11,13 +11,15 @@ local namespace_id = api.nvim_create_namespace('NvimTreeHighlights')
 
 local icon_state = config.get_icon_state()
 
+local should_hl_opened_files = (vim.g.nvim_tree_highlight_opened_files or 0) ~= 0
+
 local get_folder_icon = function() return "" end
 local function get_trailing_length()
   return vim.g.nvim_tree_add_trailing and 1 or 0
 end
 
 local set_folder_hl = function(line, depth, git_icon_len, _, hl_group)
-  table.insert(hl, {hl_group, line, depth+git_icon_len+get_trailing_length(), -1})
+  table.insert(hl, {hl_group, line, depth+git_icon_len, -1})
 end
 
 if icon_state.show_folder_icon then
@@ -44,7 +46,8 @@ if icon_state.show_folder_icon then
   end
   set_folder_hl = function(line, depth, icon_len, name_len, hl_group)
     table.insert(hl, {hl_group, line, depth+icon_len, depth+icon_len+name_len+get_trailing_length()})
-    table.insert(hl, {'NvimTreeFolderIcon', line, depth, depth+icon_len})
+    local hl_icon = (vim.g.nvim_tree_highlight_opened_files or 0) ~= 0 and hl_group or 'NvimTreeFolderIcon'
+    table.insert(hl, {hl_icon, line, depth, depth+icon_len})
   end
 end
 
@@ -98,7 +101,9 @@ if vim.g.nvim_tree_git_hl == 1 then
     },
     ["AD"] = {
       { hl = "NvimTreeFileStaged" },
-      { hl = "NvimTreeFileDeleted" }
+    },
+    ["MD"] = {
+      { hl = "NvimTreeFileStaged" },
     },
     ["AM"] = {
       { hl = "NvimTreeFileStaged" },
@@ -112,6 +117,10 @@ if vim.g.nvim_tree_git_hl == 1 then
     ["D "] = {
       { hl = "NvimTreeFileDeleted" },
       { hl = "NvimTreeFileStaged" }
+    },
+    ["DU"] = {
+      { hl = "NvimTreeFileDeleted" },
+      { hl = "NvimTreeFileMerge" }
     },
     [" A"] = { { hl = "none" } },
     ["RM"] = { { hl = "NvimTreeFileRenamed" } },
@@ -143,7 +152,13 @@ if icon_state.show_git_icon then
       { icon = icon_state.icons.git_icons.staged, hl = "NvimTreeGitStaged" },
       { icon = icon_state.icons.git_icons.unstaged, hl = "NvimTreeGitDirty" }
     },
+    ["MD"] = {
+      { icon = icon_state.icons.git_icons.staged, hl = "NvimTreeGitStaged" },
+    },
     ["A "] = {
+      { icon = icon_state.icons.git_icons.staged, hl = "NvimTreeGitStaged" },
+    },
+    ["AD"] = {
       { icon = icon_state.icons.git_icons.staged, hl = "NvimTreeGitStaged" },
     },
     [" A"] = {
@@ -162,6 +177,10 @@ if icon_state.show_git_icon then
     ["UU"] = { { icon = icon_state.icons.git_icons.unmerged, hl = "NvimTreeGitMerge" } },
     [" D"] = { { icon = icon_state.icons.git_icons.deleted, hl = "NvimTreeGitDeleted" } },
     ["D "] = { { icon = icon_state.icons.git_icons.deleted, hl = "NvimTreeGitDeleted" } },
+    ["DU"] = {
+      { icon = icon_state.icons.git_icons.deleted, hl = "NvimTreeGitDeleted" },
+      { icon = icon_state.icons.git_icons.unmerged, hl = "NvimTreeGitMerge" },
+    },
     ["!!"] = { { icon = icon_state.icons.git_icons.ignored, hl = "NvimTreeGitIgnored" } },
     dirty = { { icon = icon_state.icons.git_icons.unstaged, hl = "NvimTreeGitDirty" } },
   }
@@ -298,9 +317,15 @@ local function update_draw_data(tree, depth, markers)
         table.insert(hl, {'NvimTreeImageFile', index, offset+#icon+#git_icons, -1 })
       end
 
-      if vim.g.nvim_tree_highlight_opened_files then
+      if should_hl_opened_files then
         if vim.fn.bufloaded(node.absolute_path) > 0 then
-          table.insert(hl, {'NvimTreeOpenedFile', index, offset, offset+#icon })
+          if vim.g.nvim_tree_highlight_opened_files == 1 then
+            table.insert(hl, {'NvimTreeOpenedFile', index, offset, offset+#icon })  -- highlight icon only
+          elseif vim.g.nvim_tree_highlight_opened_files == 2 then
+            table.insert(hl, {'NvimTreeOpenedFile', index, offset+#icon+#git_icons, offset+#icon+#git_icons+#node.name })  -- highlight name only
+          elseif vim.g.nvim_tree_highlight_opened_files == 3 then
+            table.insert(hl, {'NvimTreeOpenedFile', index, offset, -1 })  -- highlight whole line
+          end
         end
       end
 
@@ -341,6 +366,7 @@ function M.draw(tree, reload)
 end
 
 function M.render_hl(bufnr)
+  if not api.nvim_buf_is_loaded(bufnr) then return end
   api.nvim_buf_clear_namespace(bufnr, namespace_id, 0, -1)
   for _, data in ipairs(hl) do
     api.nvim_buf_add_highlight(bufnr, namespace_id, data[1], data[2], data[3], data[4])

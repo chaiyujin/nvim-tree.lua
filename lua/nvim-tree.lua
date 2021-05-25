@@ -39,7 +39,7 @@ function M.open()
 end
 
 function M.tab_change()
-  if not view.win_open() then
+  if not view.win_open() and view.win_open({ any_tabpage = true }) then
     view.open()
   end
 end
@@ -59,6 +59,9 @@ local keypress_funcs = {
   rename = fs.rename(false),
   full_rename = fs.rename(true),
   copy = fs.copy,
+  copy_name = fs.copy_filename,
+  copy_path = fs.copy_path,
+  copy_absolute_path = fs.copy_absolute_path,
   cut = fs.cut,
   paste = fs.paste,
   close_node = lib.close_node,
